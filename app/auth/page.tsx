@@ -23,7 +23,7 @@ type AuthResponse = {
 };
 
 // const API_URL = "http://localhost:8080/api/auth";
-const API_URL = "http://localhost:8081/auth";
+const API_URL = "http://localhost:8081/auth"; // временно
 
 const slideVariants = {
   hiddenRight: { x: "100%", opacity: 0 },
