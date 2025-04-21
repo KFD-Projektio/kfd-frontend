@@ -15,11 +15,13 @@ export default function BoardsPage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  const API_URL = "http://localhost:8080/api/";
+
   // Функция выхода
   const handleLogout = async () => {
     try {
       // Отправляем запрос на выход
-      await fetch("http://localhost:8081/auth/logout", {
+      await fetch(`${API_URL}auth/logout`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -46,7 +48,7 @@ export default function BoardsPage() {
       }
 
       try {
-        const response = await fetch("http://localhost:8081/users/me", {
+        const response = await fetch(`${API_URL}users/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 

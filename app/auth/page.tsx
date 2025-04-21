@@ -22,8 +22,8 @@ type AuthResponse = {
   email: string;
 };
 
-// const API_URL = "http://localhost:8080/api/auth";
-const API_URL = "http://localhost:8081/auth"; // временно
+const API_URL = "http://localhost:8080/api/auth";
+// const API_URL = "http://localhost:8081/auth"; // временно
 
 const slideVariants = {
   hiddenRight: { x: "100%", opacity: 0 },
@@ -81,9 +81,14 @@ const AuthPage = () => {
     }
 
     if (step === 0) {
-      if (!email.includes("@") || !email.includes("."))
-        newErrors.email = "Некорректный email";
-      if (password.length < 6) newErrors.password = "Пароль слишком короткий";
+      const emailValid =
+        (email.includes("@") && email.includes(".")) || email.length > 3;
+      if (!emailValid) {
+        setErrors({
+          general: "Введите email или логин",
+        });
+        return false;
+      }
     }
 
     if (step === 1 && (!email.includes("@") || !email.includes("."))) {
@@ -132,11 +137,30 @@ const AuthPage = () => {
       }
 
       if (step === 0) {
+        const authData = email.includes("@")
+          ? { email, password }
+          : { login: email, password };
+
         const response = await fetch(`${API_URL}/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify(authData),
         });
+
+        // const response = await fetch(`${API_URL}/login`, {
+        //   method: "POST",
+        //   headers: { "Content-Type": "application/json" },
+
+        //   body: JSON.stringify({ email, password }),
+        // });
+
+        /*
+        const handleSubmit = async () => {
+          if (step === 0) {
+
+
+          }
+          */
 
         if (!response.ok) {
           const errorData = await response.json();
