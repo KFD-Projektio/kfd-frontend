@@ -4,20 +4,28 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 type UserData = {
   login: string;
   email: string;
 };
 
+type Board = {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+};
+
 export default function BoardsPage() {
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [boards, setBoards] = useState<Board[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   const API_URL = "http://localhost:8080/api/";
-
-  // Функция выхода
+// Функция выхода 
   const handleLogout = async () => {
     try {
       // Отправляем запрос на выход
@@ -48,13 +56,24 @@ export default function BoardsPage() {
       }
 
       try {
-        const response = await fetch(`${API_URL}users/me`, {
+        // Проверка авторизации и получение данных пользователя
+        const userResponse = await fetch(`${API_URL}users/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (response.status === 200) {
-          const data = await response.json();
-          setUserData(data);
+        if (userResponse.status === 200) {
+          const userData = await userResponse.json();
+          setUserData(userData);
+
+          // Получение списка досок пользователя
+          const boardsResponse = await fetch(`${API_URL}boards`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          
+          if (boardsResponse.ok) {
+            const boardsData = await boardsResponse.json();
+            setBoards(boardsData);
+          }
         } else {
           router.push("/auth");
         }
@@ -88,18 +107,49 @@ export default function BoardsPage() {
         </motion.button>
       </div>
 
-      <div className="mb-4 p-4 bg-[#1A1A1A] rounded-lg">
-        <h2 className="text-green-400 mb-2">Frontend Authorization:</h2>
-        <p>You're authorized on frontend</p>
+      <div className="mb-8 space-y-6">
+        <div className="p-4 bg-[#1A1A1A] rounded-lg">
+          <h2 className="text-green-400 mb-2">Frontend Authorization:</h2>
+          <p>You're authorized on frontend</p>
+        </div>
+
+        {userData && (
+          <div className="p-4 bg-[#1A1A1A] rounded-lg">
+            <h2 className="text-green-400 mb-2">Backend Authorization:</h2>
+            <p>{userData.login} authorized on backend</p>
+            <p className="text-gray-400 mt-1">Email: {userData.email}</p>
+          </div>
+        )}
       </div>
 
-      {userData && (
-        <div className="p-4 bg-[#1A1A1A] rounded-lg">
-          <h2 className="text-green-400 mb-2">Backend Authorization:</h2>
-          <p>{userData.login} authorized on backend</p>
-          <p className="text-gray-400 mt-1">Email: {userData.email}</p>
+      <div className="mt-12">
+        <h2 className="text-2xl mb-6">Your Boards</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {boards.map((board) => (
+            <motion.div
+              key={board.id}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="bg-[#1A1A1A] p-6 rounded-xl border border-[#333] hover:border-[#3D8BFF]/50 transition-colors"
+            >
+              <Link href={`/boards/${board.id}`} className="block h-full">
+                <h3 className="text-xl font-semibold mb-2">{board.name}</h3>
+                <p className="text-gray-400 text-sm mb-3">{board.description}</p>
+                <div className="text-[#3D8BFF] text-xs">
+                  Created: {new Date(board.createdAt).toLocaleDateString()}
+                </div>
+              </Link>
+            </motion.div>
+          ))}
         </div>
-      )}
+
+        {boards.length === 0 && !loading && (
+          <div className="text-center py-12 text-gray-400">
+            No boards found. Create your first board!
+          </div>
+        )}
+      </div>
     </div>
   );
 }
