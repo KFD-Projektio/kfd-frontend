@@ -22,8 +22,9 @@ type AuthResponse = {
   email: string;
 };
 
-const API_URL = "http://localhost:8080/api/auth";
-// const API_URL = "http://localhost:8081/auth"; // временно
+const API_URL = "http://localhost:8080/api";
+// const API_URL = "http://localhost:8081";
+const AUTH_URI = `${API_URL}/auth`;
 
 const slideVariants = {
   hiddenRight: { x: "100%", opacity: 0 },
@@ -121,7 +122,7 @@ const AuthPage = () => {
 
     try {
       if (step === 3) {
-        const response = await fetch(`${API_URL}/register`, {
+        const response = await fetch(`${AUTH_URI}/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, login, password }),
@@ -141,7 +142,7 @@ const AuthPage = () => {
           ? { email, password }
           : { login: email, password };
 
-        const response = await fetch(`${API_URL}/login`, {
+        const response = await fetch(`${AUTH_URI}/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(authData),
