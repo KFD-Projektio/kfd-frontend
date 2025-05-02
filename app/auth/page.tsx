@@ -113,7 +113,10 @@ const AuthPage = () => {
   const handleAuthSuccess = (tokens: AuthResponse) => {
     localStorage.setItem("access_token", tokens.accessToken);
     localStorage.setItem("refresh_token", tokens.refreshToken);
-    router.push("/boards");
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const refTo = urlParams.get("ref_to") || "/boards";
+    router.push(refTo);
   };
 
   const handleSubmit = async () => {

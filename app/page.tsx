@@ -28,7 +28,7 @@ const HomePage = () => {
         initial="hidden"
         animate="visible"
         variants={sectionVariants}
-        className="relative overflow-hidden text-white z-10 pt-28 pb-40 px-4"
+        className="relative overflow-hidden  text-white z-10 pt-28 pb-40 px-4"
       >
         <div className="container mx-auto max-w-6xl text-center relative z-10">
           <motion.h1

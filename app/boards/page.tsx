@@ -1,67 +1,65 @@
-// app/boards/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
-type UserData = {
-  login: string;
-  email: string;
+type BoardData = {
+  id: number;
+  boardName: string;
+  boardDescription: string;
 };
 
 export default function BoardsPage() {
-  const [userData, setUserData] = useState<UserData | null>(null);
+  const [boards, setBoards] = useState<BoardData[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-
-  const API_URL = "http://localhost:8080/api/";
-
-  // Функция выхода
-  const handleLogout = async () => {
-    try {
-      // Отправляем запрос на выход
-      await fetch(`${API_URL}auth/logout`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-      });
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      // Очищаем хранилище и перенаправляем
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
-      router.push("/auth");
-    }
-  };
-
-  // Проверка авторизации (существующий код)
+  console.log("Hello");
   useEffect(() => {
     const checkAuth = async () => {
+      console.log("[1] Начало проверки авторизации");
       const token = localStorage.getItem("access_token");
 
       if (!token) {
-        router.push("/auth");
+        console.warn("[2] Токен отсутствует - редирект");
+        router.push(`/auth?ref_to=${encodeURIComponent("/boards")}`);
         return;
       }
 
       try {
-        const response = await fetch(`${API_URL}users/me`, {
+        console.log("[3] Проверка валидности токена", token);
+        const userCheck = await fetch("http://localhost:8080/api/users/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (response.status === 200) {
-          const data = await response.json();
-          setUserData(data);
-        } else {
-          router.push("/auth");
+        console.log("[4] Статус проверки токена:", userCheck.status);
+        if (!userCheck.ok) {
+          console.error("[5] Ошибка проверки токена:", await userCheck.text());
+          throw new Error("Invalid token");
         }
+
+        console.log("[6] Загрузка досок...");
+        const boardsResponse = await fetch(
+          "http://localhost:8080/api/boards/current",
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+
+        console.log("[7] Статус загрузки досок:", boardsResponse.status);
+        if (!boardsResponse.ok) {
+          console.error("[8] Ошибка загрузки:", await boardsResponse.text());
+          throw new Error("Failed to load boards");
+        }
+
+        const data = await boardsResponse.json();
+        console.log("[9] Получены данные:", data);
+        setBoards(data);
       } catch (error) {
-        console.error("Auth check failed:", error);
-        router.push("/auth");
+        console.error("[10] Критическая ошибка:", error);
+        localStorage.removeItem("access_token");
+        router.push(`/auth?ref_to=${encodeURIComponent("/boards")}`);
       } finally {
+        console.log("[11] Завершение загрузки");
         setLoading(false);
       }
     };
@@ -70,34 +68,56 @@ export default function BoardsPage() {
   }, [router]);
 
   if (loading) {
-    return <div className="p-4 text-gray-500">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-[#121212] p-8 text-white">
+        <div className="animate-pulse space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-24 bg-[#1A1A1A] rounded-xl" />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-[#121212] p-8 text-white">
       <div className="flex justify-between items-start mb-8">
-        <h1 className="text-2xl">Boards Page</h1>
-
+        <h1 className="text-2xl font-bold">Мои доски</h1>
         <motion.button
-          onClick={handleLogout}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition-colors"
+          className="bg-[#3D8BFF] px-4 py-2 rounded-lg"
+          onClick={() => router.push("/boards/new")}
         >
-          Logout
+          + Новая доска
         </motion.button>
       </div>
 
-      <div className="mb-4 p-4 bg-[#1A1A1A] rounded-lg">
-        <h2 className="text-green-400 mb-2">Frontend Authorization:</h2>
-        <p>You're authorized on frontend</p>
-      </div>
-
-      {userData && (
-        <div className="p-4 bg-[#1A1A1A] rounded-lg">
-          <h2 className="text-green-400 mb-2">Backend Authorization:</h2>
-          <p>{userData.login} authorized on backend</p>
-          <p className="text-gray-400 mt-1">Email: {userData.email}</p>
+      {boards.length === 0 ? (
+        <div className="text-center py-12 text-gray-400">
+          У вас пока нет досок
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {boards.map((board) => (
+            <motion.div
+              key={board.id}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Link
+                href={`/boards/${board.id}`}
+                className="block bg-[#1A1A1A] p-6 rounded-xl border border-[#333] hover:border-[#3D8BFF] transition-colors"
+              >
+                <h3 className="text-xl font-semibold mb-2">
+                  {board.boardName}
+                </h3>
+                <p className="text-gray-400">
+                  {board.boardDescription || "Без описания"}
+                </p>
+              </Link>
+            </motion.div>
+          ))}
         </div>
       )}
     </div>
