@@ -22,8 +22,7 @@ type AuthResponse = {
   email: string;
 };
 
-const API_URL = "http://localhost:8080/api";
-// const API_URL = "http://localhost:8081";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 const AUTH_URI = `${API_URL}/auth`;
 
 const slideVariants = {

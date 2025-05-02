@@ -70,17 +70,20 @@ export default function BoardDetailPage() {
     }
 
     try {
-      const userCheck = await fetch("http://localhost:8080/api/users/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const userCheck = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/users/me`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
 
       if (!userCheck.ok) throw new Error("Ошибка авторизации");
 
       const [boardRes, columnsRes] = await Promise.all([
-        fetch(`http://localhost:8080/api/boards/${boardId}`, {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/boards/${boardId}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch(`http://localhost:8080/api/boards/${boardId}/columns`, {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/boards/${boardId}/columns`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -122,7 +125,7 @@ export default function BoardDetailPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/boards/${boardId}/columns`,
+        `${process.env.NEXT_PUBLIC_API_URL}/boards/${boardId}/columns`,
         {
           method: "POST",
           headers: {
@@ -156,7 +159,7 @@ export default function BoardDetailPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/boards/${boardId}/columns/${selectedColumn.columnPosition}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/boards/${boardId}/columns/${selectedColumn.columnPosition}`,
         {
           method: "DELETE",
           headers: {
