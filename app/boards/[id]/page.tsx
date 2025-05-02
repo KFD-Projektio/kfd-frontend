@@ -95,15 +95,13 @@ export default function BoardDetailPage() {
 
       setBoard({
         boardName: boardData.boardName || "Без названия",
-        columns: columnsData
-          .sort(
-            (a: ColumnData, b: ColumnData) =>
-              a.columnPosition - b.columnPosition,
-          )
-          .map((col) => ({
-            ...col,
-            cards: col.cards || [],
-          })),
+        columns: columnsData.sort(
+          (a: ColumnData, b: ColumnData) => a.columnPosition - b.columnPosition,
+        ),
+        // .map((col) => ({
+        //   ...col,
+        //   cards: col.cards || [],
+        // })),
       });
     } catch (error) {
       console.error(error);
