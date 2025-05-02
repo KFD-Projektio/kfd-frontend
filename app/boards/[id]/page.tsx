@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { FiPlus, FiTrash2, FiX } from "react-icons/fi";
@@ -58,7 +58,7 @@ export default function BoardDetailPage() {
     },
   };
 
-  const fetchBoardData = async () => {
+  const fetchBoardData = useCallback(async () => {
     const token = localStorage.getItem("access_token");
     const boardId = Array.isArray(params.id) ? params.id[0] : params.id;
 
@@ -111,11 +111,11 @@ export default function BoardDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id, router]);
 
   useEffect(() => {
     fetchBoardData();
-  }, [params.id]);
+  }, [params.id, fetchBoardData]);
 
   const handleAddColumn = async () => {
     if (!newColumnTitle) return;
@@ -249,7 +249,8 @@ export default function BoardDetailPage() {
         <div className="flex flex-col gap-4">
           <h2 className="text-xl font-bold mb-4">Удалить колонку</h2>
           <p>
-            Вы уверены что хотите удалить колонку "{selectedColumn?.title}"?
+            Вы уверены что хотите удалить колонку &quot;{selectedColumn?.title}
+            &quot;?
           </p>
           <div className="flex justify-end gap-2 mt-4">
             <button

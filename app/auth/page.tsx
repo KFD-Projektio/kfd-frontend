@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timestamp } from "next/dist/server/lib/cache-handlers/types";
 
 type FieldErrors = {
   email?: string;
@@ -60,13 +59,7 @@ const AuthPage = () => {
     });
   }, [email, login, password, confirmPassword]);
 
-  useEffect(() => {
-    if (Object.keys(errors).length > 0) {
-      validateStep();
-    }
-  }, [email, login, password, confirmPassword, step]);
-
-  const validateStep = () => {
+  const validateStep = useCallback(() => {
     const newErrors: FieldErrors = { ...errors };
 
     if (step === 0) {
@@ -107,7 +100,13 @@ const AuthPage = () => {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [confirmPassword, email, errors, login.length, password, step]);
+
+  useEffect(() => {
+    if (Object.keys(errors).length > 0) {
+      validateStep();
+    }
+  }, [email, login, password, confirmPassword, step, validateStep, errors]);
 
   const handleAuthSuccess = (tokens: AuthResponse) => {
     localStorage.setItem("access_token", tokens.accessToken);
@@ -461,8 +460,8 @@ const AuthPage = () => {
       >
         <p>Projektio — бара бара бере бере</p>
         <p className="mt-1">
-          Нажимая "Продолжить", вы соглашаетесь с нашими Условиями использования
-          и Политикой конфиденциальности
+          Нажимая Продолжить, вы соглашаетесь с нашими Условиями использования и
+          Политикой конфиденциальности;
         </p>
       </motion.footer>
     </div>
