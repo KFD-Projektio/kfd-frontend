@@ -156,7 +156,7 @@ export default function BoardDetailPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/boards/${boardId}/columns/${selectedColumn.id}`,
+        `http://localhost:8080/api/boards/${boardId}/columns/${selectedColumn.columnPosition}`,
         {
           method: "DELETE",
           headers: {
@@ -284,17 +284,14 @@ export default function BoardDetailPage() {
           ← Все доски
         </motion.button>
       </div>
-
-      <div className="flex gap-4 overflow-x-auto pb-4 items-start">
+      <div className="flex gap-4 overflow-x-auto pb-4 items-start h-[calc(100vh-160px)]">
         {board.columns?.map((column) => (
           <motion.div
             key={column.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
             className="min-w-[300px] bg-[#1A1A1A] p-4 rounded-xl border border-[#333] flex flex-col"
+            style={{ height: "calc(50vh - 60px)" }}
           >
-            {/* Заголовок колонки с кнопкой удаления */}
+            {/* Заголовок с кнопкой удаления */}
             <div className="flex justify-between items-center mb-4 group relative">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <h3 className="font-semibold truncate pr-8">{column.title}</h3>
@@ -308,14 +305,14 @@ export default function BoardDetailPage() {
                   setShowDeleteModal(true);
                 }}
                 className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100
-                          transition-opacity text-gray-400 hover:text-red-500 p-1 z-10"
+                                transition-opacity text-gray-400 hover:text-red-500 p-1 z-10"
               >
                 <FiTrash2 size={18} />
               </button>
             </div>
 
             {/* Область карточек */}
-            <div className="space-y-2 min-h-[200px] flex-1">
+            <div className="space-y-2 flex-1 overflow-y-auto">
               {column.cards?.map((card) => (
                 <motion.div
                   key={card.id}
@@ -330,64 +327,26 @@ export default function BoardDetailPage() {
                   )}
                 </motion.div>
               ))}
-
-              {!column.cards?.length && (
-                <div className="h-full flex items-center justify-center text-gray-500 text-sm">
-                  Нет карточек
-                </div>
-              )}
             </div>
 
-            {/* Кнопка добавления карточки внизу колонки */}
-            <button className="mt-4 p-2 w-full text-gray-400 hover:text-white transition-colors text-left">
+            {/* Кнопка добавления карточки */}
+            <button className="mt-4 p-2 text-gray-400 hover:text-white transition-colors">
               + Добавить карточку
             </button>
           </motion.div>
         ))}
 
-        {/* Единственная кнопка добавления колонки */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="min-w-[300px]"
-        >
+        {/* Кнопка добавления колонки */}
+        <div className="min-w-[300px]" style={{ height: "calc(50vh - 60px)" }}>
           <button
             onClick={() => setShowAddModal(true)}
-            className={`w-full h-full bg-[#1A1A1A] hover:bg-[#252525] transition-colors
-                    rounded-xl border-2 border-dashed border-[#3D8BFF] flex items-center justify-center
-                    ${board.columns?.length ? "h-[calc(100%-40px)] mt-[40px]" : "min-h-[300px]"}`}
+            className="w-full h-full bg-[#1A1A1A] hover:bg-[#252525] transition-colors
+                            rounded-xl border-2 border-dashed border-[#3D8BFF] flex items-center justify-center"
           >
-            <div className="text-center p-4">
-              <FiPlus className="w-8 h-8 text-[#3D8BFF] mx-auto mb-2" />
-              <span className="text-[#3D8BFF]">
-                {board.columns?.length
-                  ? "Добавить колонку"
-                  : "Создать первую колонку"}
-              </span>
-            </div>
+            <FiPlus className="w-8 h-8 text-[#3D8BFF]" />
           </button>
-        </motion.div>
+        </div>
       </div>
-
-      {!loading && (!board.columns || board.columns.length === 0) && (
-        <motion.div
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="text-center mt-20"
-        >
-          <div className="text-2xl text-gray-400 mb-4">
-            Ваша доска пока пуста
-          </div>
-          <button
-            onClick={handleAddColumn}
-            className="bg-[#3D8BFF] hover:bg-[#2B6BB5] px-6 py-3 rounded-lg
-                    flex items-center gap-2 mx-auto"
-          >
-            <FiPlus className="w-5 h-5" />
-            Создать первую колонку
-          </button>
-        </motion.div>
-      )}
     </div>
   );
 }
