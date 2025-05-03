@@ -1,18 +1,24 @@
 FROM node:18-alpine AS builder
-
-RUN apk add --no-cache libc6-compat
-
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --omit=dev
+# COPY prisma ./prisma/
+RUN npm ci
 
 COPY . .
 RUN npm run build
 
-FROM nginx:alpine AS runner
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=builder /app/.next/static /usr/share/nginx/html/_next/static
-COPY --from=builder /app/public /usr/share/nginx/html/
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+FROM node:18-alpine AS production
+WORKDIR /app
+
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/next.config.js ./
+
+ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
+
+EXPOSE 3000
+CMD ["npm", "start"]
