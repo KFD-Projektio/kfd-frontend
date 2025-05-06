@@ -37,6 +37,44 @@ export default function BoardDetailPage() {
   const [selectedColumn, setSelectedColumn] = useState<ColumnData | null>(null);
   const router = useRouter();
   const params = useParams();
+  const [showAddCardModal, setShowAddCardModal] = useState(false);
+  const [newCardTitle, setNewCardTitle] = useState("");
+  const [newCardDescription, setNewCardDescription] = useState("");
+  const [selectedColumnForCard, setSelectedColumnForCard] =
+    useState<ColumnData | null>(null);
+
+  const handleAddCard = async () => {
+    const token = localStorage.getItem("access_token");
+    const boardId = Array.isArray(params.id) ? params.id[0] : params.id;
+
+    console.log(boardId);
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tasks`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: newCardTitle,
+          description: newCardDescription,
+          columnId: selectedColumnForCard?.id,
+          boardId: boardId,
+          createdBy: 0, // не играет роли мискилк
+        }),
+      });
+      if (response.ok) {
+        // Обновить список задач в колонке
+        fetchBoardData();
+        setShowAddCardModal(false);
+        setNewCardTitle(""); // ⬅️ ОЧИСТКА ПОЛЕЙ
+        setNewCardDescription(""); // ⬅️ ОЧИСТКА ПОЛЕЙ
+      }
+    } catch (error) {
+      console.error("Ошибка создания задачи:", error);
+    }
+  };
 
   // Стили для модальных окон
   const modalStyles = {
@@ -56,6 +94,28 @@ export default function BoardDetailPage() {
     overlay: {
       backgroundColor: "rgba(0, 0, 0, 0.75)",
     },
+  };
+
+  const handleDeleteCard = async (taskId: number) => {
+    const token = localStorage.getItem("access_token");
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (response.ok) {
+        fetchBoardData();
+      }
+    } catch (error) {
+      console.error("Ошибка удаления задачи:", error);
+    }
   };
 
   const fetchBoardData = useCallback(async () => {
@@ -79,11 +139,14 @@ export default function BoardDetailPage() {
 
       if (!userCheck.ok) throw new Error("Ошибка авторизации");
 
-      const [boardRes, columnsRes] = await Promise.all([
+      const [boardRes, columnsRes, tasksRes] = await Promise.all([
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/boards/${boardId}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/boards/${boardId}/columns`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/tasks?boardId=${boardId}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -92,16 +155,18 @@ export default function BoardDetailPage() {
 
       const boardData = await boardRes.json();
       const columnsData = await columnsRes.json();
+      const tasksData = await tasksRes.json();
+
+      const columnsWithCards = columnsData.map((column: ColumnData) => ({
+        ...column,
+        cards: tasksData.filter((task: any) => task.columnId === column.id),
+      }));
 
       setBoard({
         boardName: boardData.boardName || "Без названия",
-        columns: columnsData.sort(
+        columns: columnsWithCards.sort(
           (a: ColumnData, b: ColumnData) => a.columnPosition - b.columnPosition,
         ),
-        // .map((col) => ({
-        //   ...col,
-        //   cards: col.cards || [],
-        // })),
       });
     } catch (error) {
       console.error(error);
@@ -197,6 +262,53 @@ export default function BoardDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#121212] p-8 text-white">
+      {/* Модальное окно добавления карточки */}
+      <ReactModal
+        isOpen={showAddCardModal}
+        onRequestClose={() => setShowAddCardModal(false)}
+        style={modalStyles}
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">Новая карточка</h2>
+            <button
+              onClick={() => setShowAddCardModal(false)}
+              className="text-gray-400 hover:text-white"
+            >
+              <FiX size={24} />
+            </button>
+          </div>
+          <input
+            type="text"
+            placeholder="Название карточки"
+            className="w-full p-3 bg-[#222] rounded border border-[#333] focus:outline-none focus:border-[#3D8BFF]"
+            value={newCardTitle}
+            onChange={(e) => setNewCardTitle(e.target.value)}
+            autoFocus
+          />
+          <textarea
+            placeholder="Описание"
+            className="w-full p-3 bg-[#222] rounded border border-[#333] focus:outline-none focus:border-[#3D8BFF]"
+            value={newCardDescription}
+            onChange={(e) => setNewCardDescription(e.target.value)}
+          />
+          <div className="flex justify-end gap-2 mt-4">
+            <button
+              onClick={() => setShowAddCardModal(false)}
+              className="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-500"
+            >
+              Отмена
+            </button>
+            <button
+              onClick={handleAddCard}
+              className="px-4 py-2 rounded-lg bg-[#3D8BFF] hover:bg-[#2B6BB5]"
+            >
+              Создать
+            </button>
+          </div>
+        </div>
+      </ReactModal>
+
       {/* Модальное окно добавления */}
       <ReactModal
         isOpen={showAddModal}
@@ -314,7 +426,7 @@ export default function BoardDetailPage() {
             </div>
 
             {/* Область карточек */}
-            <div className="space-y-2 flex-1 overflow-y-auto">
+            {/* <div className="space-y-2 flex-1 overflow-y-auto">
               {column.cards?.map((card) => (
                 <motion.div
                   key={card.id}
@@ -329,10 +441,41 @@ export default function BoardDetailPage() {
                   )}
                 </motion.div>
               ))}
-            </div>
+            </div> */}
 
-            {/* Кнопка добавления карточки */}
-            <button className="mt-4 p-2 text-gray-400 hover:text-white transition-colors">
+            <div className="space-y-2 flex-1 overflow-y-auto">
+              {column.cards?.map((card) => (
+                <motion.div
+                  key={card.id}
+                  whileHover={{ scale: 1.02 }}
+                  className="p-3 bg-[#222] rounded-lg border border-[#333] cursor-pointer relative group"
+                >
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteCard(card.id);
+                    }}
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300"
+                  >
+                    <FiTrash2 size={14} />
+                  </button>
+
+                  <p className="text-sm">{card.title}</p>
+                  {card.description && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      {card.description}
+                    </p>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+            <button
+              onClick={() => {
+                setSelectedColumnForCard(column); // ⬅️ УСТАНАВЛИВАЕМ ТЕКУЩУЮ КОЛОНКУ
+                setShowAddCardModal(true);
+              }}
+              className="mt-4 p-2 text-gray-400 hover:text-white transition-colors"
+            >
               + Добавить карточку
             </button>
           </motion.div>
