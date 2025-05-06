@@ -54,7 +54,6 @@ const MainNavbar = () => {
               </Link>
             </div>
           </div>
-
           {/* Правый блок */}
           <div className="flex items-center gap-4">
             <motion.div

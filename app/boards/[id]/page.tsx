@@ -10,6 +10,8 @@ if (typeof window !== "undefined") {
   ReactModal.setAppElement("#__next");
 }
 
+type TaskWithColumn = CardData & { columnId: number };
+
 interface ColumnData {
   id: number;
   title: string;
@@ -42,6 +44,11 @@ export default function BoardDetailPage() {
   const [newCardDescription, setNewCardDescription] = useState("");
   const [selectedColumnForCard, setSelectedColumnForCard] =
     useState<ColumnData | null>(null);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [userIdInput, setUserIdInput] = useState("");
+  const [userAction, setUserAction] = useState<
+    "add" | "change-owner" | "remove"
+  >("add");
 
   const handleAddCard = async () => {
     const token = localStorage.getItem("access_token");
@@ -159,7 +166,9 @@ export default function BoardDetailPage() {
 
       const columnsWithCards = columnsData.map((column: ColumnData) => ({
         ...column,
-        cards: tasksData.filter((task: any) => task.columnId === column.id),
+        cards: tasksData.filter(
+          (task: TaskWithColumn) => task.columnId === column.id,
+        ),
       }));
 
       setBoard({
@@ -214,6 +223,41 @@ export default function BoardDetailPage() {
     }
   };
 
+  const handleUserAction = async () => {
+    const token = localStorage.getItem("access_token");
+    const boardId = Array.isArray(params.id) ? params.id[0] : params.id;
+
+    try {
+      const method =
+        userAction === "add"
+          ? "POST"
+          : userAction === "change-owner"
+            ? "PUT"
+            : "DELETE";
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/boards/${boardId}/users`,
+        {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ userId: Number(userIdInput) }),
+        },
+      );
+
+      if (response.ok) {
+        const updatedBoard = await response.json();
+        setBoard((prev) => ({ ...prev, userIds: updatedBoard.userIds }));
+        setShowUserModal(false);
+        setUserIdInput("");
+      }
+    } catch (error) {
+      console.error("Ошибка выполнения действия:", error);
+    }
+  };
+
   const handleDeleteColumn = async () => {
     if (!selectedColumn) return;
 
@@ -262,6 +306,41 @@ export default function BoardDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#121212] p-8 text-white">
+      <ReactModal
+        isOpen={showUserModal}
+        onRequestClose={() => setShowUserModal(false)}
+        style={modalStyles}
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">
+              {userAction === "add" && "Добавить пользователя"}
+              {userAction === "change-owner" && "Изменить владельца"}
+              {userAction === "remove" && "Удалить пользователя"}
+            </h2>
+            <button
+              onClick={() => setShowUserModal(false)}
+              className="text-gray-400 hover:text-white"
+            >
+              <FiX size={24} />
+            </button>
+          </div>
+          <input
+            type="number"
+            placeholder="ID пользователя"
+            className="w-full p-3 bg-[#222] rounded border border-[#333] focus:outline-none"
+            value={userIdInput}
+            onChange={(e) => setUserIdInput(e.target.value)}
+          />
+          <button
+            onClick={handleUserAction}
+            className="bg-[#3D8BFF] px-4 py-2 rounded-lg hover:bg-[#2B6BB5]"
+          >
+            Подтвердить
+          </button>
+        </div>
+      </ReactModal>
+
       {/* Модальное окно добавления карточки */}
       <ReactModal
         isOpen={showAddCardModal}
@@ -388,6 +467,43 @@ export default function BoardDetailPage() {
         >
           {board.boardName}
         </motion.h1>
+
+        {/* В разделе с заголовком доски */}
+        <div className="flex gap-2">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="bg-[#3D8BFF] px-4 py-2 rounded-lg"
+            onClick={() => {
+              setUserAction("add");
+              setShowUserModal(true);
+            }}
+          >
+            + Пользователь
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="bg-yellow-600 px-4 py-2 rounded-lg"
+            onClick={() => {
+              setUserAction("change-owner");
+              setShowUserModal(true);
+            }}
+          >
+            Сменить владельца
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="bg-red-600 px-4 py-2 rounded-lg"
+            onClick={() => {
+              setUserAction("remove");
+              setShowUserModal(true);
+            }}
+          >
+            - Пользователь
+          </motion.button>
+        </div>
 
         <motion.button
           whileHover={{ scale: 1.05 }}

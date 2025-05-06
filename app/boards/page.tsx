@@ -86,6 +86,18 @@ export default function BoardsPage() {
     <div className="min-h-screen bg-[#121212] p-8 text-white">
       <div className="flex justify-between items-start mb-8">
         <h1 className="text-2xl font-bold">Мои доски</h1>
+
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => {
+            router.push("/profile");
+          }}
+          className="bg-[#3D8BFF] px-4 py-2 rounded"
+        >
+          Профиль
+        </motion.button>
+
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
