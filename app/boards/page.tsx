@@ -29,12 +29,9 @@ export default function BoardsPage() {
 
       try {
         console.log("[3] Проверка валидности токена", token);
-        const userCheck = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/users/me`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+        const userCheck = await fetch(`http://localhost:8080/api/users/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
         console.log("[4] Статус проверки токена:", userCheck.status);
         if (!userCheck.ok) {
@@ -44,7 +41,7 @@ export default function BoardsPage() {
 
         console.log("[6] Загрузка досок...");
         const boardsResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/boards/current`,
+          `http://localhost:8080/api/boards/current`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
 

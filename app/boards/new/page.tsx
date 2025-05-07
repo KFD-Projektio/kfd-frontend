@@ -13,17 +13,14 @@ export default function NewBoardPage() {
     const token = localStorage.getItem("access_token");
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/boards`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ title, description, isPrivate }),
+      const response = await fetch(`http://localhost:8080/api/boards`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify({ title, description, isPrivate }),
+      });
 
       if (response.ok) {
         const board = await response.json();

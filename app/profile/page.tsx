@@ -19,12 +19,9 @@ export default function ProfilePage() {
     const fetchProfile = async () => {
       const token = localStorage.getItem("access_token");
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/users/me`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+        const response = await fetch(`http://localhost:8080/api/users/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         const data = await response.json();
         setUserData(data);
       } catch (error) {
